@@ -58,7 +58,7 @@ export class SubmissionSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
+  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'role', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -70,12 +70,14 @@ export class UserSchema extends BaseModel {
   declare id: number
   @column({ serializeAs: null })
   declare password: string
+  @column()
+  declare role: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }
 
 export class VoteSchema extends BaseModel {
-  static $columns = ['createdAt', 'id', 'score', 'submissionId', 'type'] as const
+  static $columns = ['createdAt', 'id', 'score', 'submissionId', 'type', 'userId', 'voterName'] as const
   $columns = VoteSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -87,4 +89,8 @@ export class VoteSchema extends BaseModel {
   declare submissionId: number | null
   @column()
   declare type: string
+  @column()
+  declare userId: number | null
+  @column()
+  declare voterName: string | null
 }

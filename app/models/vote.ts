@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import Submission from '#models/submission'
+import User from '#models/user'
 
 export default class Vote extends BaseModel {
   @column({ isPrimary: true })
@@ -11,14 +12,22 @@ export default class Vote extends BaseModel {
   declare submissionId: number
 
   @column()
-  declare type: string // 'public' atau 'jury'
+  declare userId: number | null
+
+  @column({ columnName: 'voter_name' })
+  declare voterName: string | null
 
   @column()
-  declare score: number // 1 untuk publik, kustom (1-100) untuk juri
+  declare type: string
 
-  // Relasi: Vote ini ditujukan untuk sebuah Submission (Karya)
+  @column()
+  declare score: number
+
   @belongsTo(() => Submission)
   declare submission: BelongsTo<typeof Submission>
+
+  @belongsTo(() => User)
+  declare user: BelongsTo<typeof User>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

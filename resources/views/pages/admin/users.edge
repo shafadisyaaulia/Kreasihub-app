@@ -1,0 +1,52 @@
+@layouts.main({ title: 'Kelola Pengguna — Dashboard Admin' })
+
+<div style="max-width: 1000px; margin: 40px auto; padding: 0 20px;">
+  
+  {{-- BAGIAN ATAS: Judul Halaman dan Tombol Kembali --}}
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div>
+      <h1 style="font-size: 2.2rem; font-weight: 700; color: var(--black); margin: 0;">Kelola Pengguna</h1>
+      <p style="color: var(--muted); margin: 4px 0 0 0;">Total Akun Terdaftar: <strong>{{ users.length }} orang</strong></p>
+    </div>
+    <a href="/admin/dashboard" class="btn btn-o" style="text-decoration: none;">← Kembali ke Dashboard</a>
+  </div>
+
+  {{-- BAGIAN TABEL: Daftar Akun Pengguna --}}
+  <div class="table-container" style="background: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width: 60px;">No</th>
+          <th>Nama Lengkap</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Bergabung</th>
+        </tr>
+      </thead>
+      <tbody>
+        @each((user, index) in users)
+          {{-- Berikan warna background hijau soft khusus untuk baris akun Admin --}}
+          <tr style="background: {{ user.role === 'admin' ? '#f0fdf4' : 'transparent' }}">
+            <td>{{ index + 1 }}</td>
+            <td style="font-weight: 600; color: var(--black);">{{ user.fullName || 'User Biasa' }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span class="badge {{ user.role === 'admin' ? 'badge-aktif' : 'badge-selesai' }}" style="font-size:0.7rem;">
+                {{ user.role.toUpperCase() }}
+              </span>
+            </td>
+            <td style="font-size: 0.85rem;">
+              {{ user.createdAt.toFormat('dd LLL yyyy, HH:mm') }} WIB
+            </td>
+          </tr>
+        @else
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 40px;">Belum ada user yang mendaftar.</td>
+          </tr>
+        @endeach
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@end

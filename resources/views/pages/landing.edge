@@ -1,61 +1,90 @@
 @layouts.main({ title: 'Jelajahi Sayembara — KreasiHub' })
+
 <nav class="navbar">
-<a href="/" class="logo">Sayembara</a>
-<div class="nav-links">
-<a href="/" class="nav-link active">Jelajahi</a>
-<a href="/admin/dashboard" class="nav-link">Dashboard Admin</a>
-</div>
-<div class="nav-actions">
-<a href="/admin/dashboard" class="btn btn-g">Kelola Platform</a>
-</div>
+  <a href="/" class="logo">KreasiHub</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link active">Jelajahi</a>
+  </div>
+  <div class="nav-actions">
+    @if(auth.isAuthenticated)
+      @if(auth.user.role === 'admin')
+        <a href="/admin/dashboard" class="btn btn-p">⚙ Dashboard Admin</a>
+      @else
+        <span style="font-size: 0.95rem; color: var(--ink); font-weight: 500;">👋 {{ auth.user.fullName || 'Pengguna Umum' }}</span>
+      @endif
+
+      <form action="/logout" method="POST" style="margin:0;">
+        {{ csrfField() }}
+        <button type="submit" class="btn btn-o">Logout</button>
+      </form>
+    @else
+      <a href="/login" class="btn btn-g">Login Admin</a>
+    @endif
+  </div>
 </nav>
 
 <div class="hero">
-<p class="hero-label">Platform Kompetisi Kreatif</p>
-<h1>Tunjukkan<br><em>karyamu.</em></h1>
-<p>Ikuti sayembara desain, submit karyamu, dan biarkan rumus komparasi vote menentukan yang terbaik.</p>
+  <p class="hero-label">Platform Kompetisi Kreatif #1</p>
+  <h1>Tunjukkan<br><em>karyamu.</em></h1>
+  <p>Ikuti sayembara desain, submit karyamu, dan biarkan rumus komparasi vote menentukan yang terbaik.</p>
+  <div class="hero-cta">
+    @if(contests.length > 0)
+      <a href="#sayembara" class="btn btn-p" style="padding: 14px 32px; font-size: 1rem;">Lihat Sayembara →</a>
+    @endif
+    @if(!auth.isAuthenticated)
+      <a href="/login" class="btn btn-g" style="padding: 14px 32px; font-size: 1rem;">Login Admin</a>
+    @endif
+  </div>
 </div>
 
-<div class="cards-section">
-<div class="section-header">
-<p class="section-title">Sayembara aktif</p>
+<div class="cards-section" id="sayembara">
+  <div class="section-header">
+    <p class="section-title">Sayembara aktif ({{ contests.length }})</p>
+  </div>
+  <div class="cards">
+    @each(contest in contests)
+      <div class="card" onclick="window.location.href='/sayembara/{{ contest.id }}'">
+        <div class="card-img" style="padding: 0; overflow: hidden; position: relative;">
+          <img src="{{ contest.imageUrl || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=800' }}" style="width:100%;height:100%;object-fit:cover;" alt="Banner">
+          <span style="position: absolute; top: 12px; left: 12px;">
+            <span class="badge {{ contest.status === 'active' ? 'badge-aktif' : 'badge-selesai' }}">
+              {{ contest.status === 'active' ? '🟢 Aktif' : '🏁 Selesai' }}
+            </span>
+          </span>
+        </div>
+        <div class="card-body">
+          <p class="card-cat">{{ contest.category }} &bull; Oleh {{ contest.organizer || 'NN' }}</p>
+          <p class="card-title">{{ contest.title }}</p>
+          <p class="card-desc">{{ contest.description }}</p>
+          <div class="card-meta">
+            <div>
+              <p class="card-meta-text" style="color: var(--muted)">Deadline</p>
+              <p class="card-meta-text" style="font-weight:500;color:var(--ink)">{{ contest.deadline.toFormat('dd LLL yyyy') }}</p>
+            </div>
+            <div>
+              <p class="card-meta-text" style="color:var(--muted);text-align:right">Karya</p>
+              <p class="card-meta-text" style="font-weight:500;color:var(--ink);text-align:right">{{ contest.submissions.length }} Peserta</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    @else
+      <div style="grid-column:1/-1;text-align:center;padding:64px 32px;background:var(--surface);border:2px dashed var(--border);border-radius:20px;">
+        <div style="font-size:3rem;margin-bottom:16px;">🎨</div>
+        <h3 style="font-size:1.3rem;font-weight:600;color:var(--black);margin-bottom:8px;">Belum ada sayembara aktif</h3>
+        <p style="color:var(--muted);margin-bottom:24px;">Jadilah yang pertama membuka kompetisi kreatif!</p>
+        @if(auth.isAuthenticated)
+          @if(auth.user.role === 'admin')
+            <a href="/admin/dashboard" class="btn btn-p">+ Buat Sayembara Pertama</a>
+          @else
+            <p style="color:var(--muted); font-size:0.9rem;">Silakan hubungi Admin untuk mengadakan sayembara baru.</p>
+          @endif
+        @else
+          <a href="/login" class="btn btn-p">Masuk sebagai Admin</a>
+        @endif
+      </div>
+    @endeach
+  </div>
 </div>
-<div class="cards">
-@each(contest in contests)
-<div class="card" onclick="window.location.href='/sayembara/{{ contest.id }}'">
-<div class="card-img" style="padding: 0; overflow: hidden; position: relative;">
-<img src="{{ contest.imageUrl || 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=800' }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner Sayembara">
-<span style="position: absolute; top: 12px; left: 12px;">
-<span class="badge {{ contest.status === 'active' ? 'badge-aktif' : 'badge-selesai' }}">
-{{ contest.status === 'active' ? 'Aktif' : 'Selesai' }}
-</span>
-</span>
-</div>
-<div class="card-body">
-<p class="card-cat">{{ contest.category }} &bull; Oleh {{ contest.organizer || 'NN' }}</p>
-<p class="card-title">{{ contest.title }}</p>
-<p class="card-desc">{{ contest.description }}</p>
-<div class="card-meta">
-<div>
-<p class="card-meta-text" style="color: var(--muted)">Deadline</p>
-<p class="card-meta-text" style="font-weight: 500; color: var(--ink)">
-{{ contest.deadline.toFormat('dd LLL yyyy') }}
-</p>
-</div>
-<div>
-<p class="card-meta-text" style="color: var(--muted); text-align: right">Karya</p>
-<p class="card-meta-text" style="font-weight: 500; color: var(--ink); text-align: right">
-{{ contest.submissions.length }} Peserta
-</p>
-</div>
-</div>
-</div>
-</div>
-@else
-<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: var(--muted);">
-Belum ada sayembara aktif. Buka Dashboard Admin untuk menambahkan lomba pertama!
-</div>
-@endeach
-</div>
-</div>
+
 @end

@@ -1,12 +1,30 @@
-<div class="flash-container">
+<div class="flash-container" id="flash-container">
   @if(flashMessages.has('error'))
-    @alert.root({ variant: 'destructive', autoDismiss: true })
-      @!alert.description({ text: flashMessages.get('error') })
-    @end
+    <div x-data="alert" x-init="init()" x-cloak class="alert alert-destructive">{{ flashMessages.get('error') }}</div>
   @end
   @if(flashMessages.has('success'))
-    @alert.root({ variant: 'success', autoDismiss: true })
-      @!alert.description({ text: flashMessages.get('success') })
-    @end
+    <div x-data="alert" x-init="init()" x-cloak class="alert alert-success">{{ flashMessages.get('success') }}</div>
   @end
 </div>
+
+<script>
+  window.showFlash = function (message, variant = 'success') {
+    try {
+      const container = document.getElementById('flash-container')
+      if (!container) return
+
+      const div = document.createElement('div')
+      div.setAttribute('x-data', 'alert')
+      div.setAttribute('x-init', 'init()')
+      div.setAttribute('x-cloak', '')
+      div.className = `alert ${variant === 'error' || variant === 'destructive' ? 'alert-destructive' : 'alert-success'}`
+      div.innerHTML = message
+      container.appendChild(div)
+      if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+        window.Alpine.initTree(div)
+      }
+    } catch (e) {
+      console.warn('showFlash failed', e)
+    }
+  }
+</script>

@@ -23,11 +23,9 @@ export default class Submission extends BaseModel {
   @column()
   declare finalScore: number
 
-  // Relasi: Submission ini milik sebuah Kontes
   @belongsTo(() => Contest)
   declare contest: BelongsTo<typeof Contest>
 
-  // Relasi: Submission ini memiliki Banyak Vote (baik publik maupun juri)
   @hasMany(() => Vote)
   declare votes: HasMany<typeof Vote>
 

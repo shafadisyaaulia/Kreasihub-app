@@ -1,18 +1,15 @@
 import vine from '@vinejs/vine'
 
 /**
- * Shared rules for email and password.
+ * Buat skema mentah objek user
  */
-const email = () => vine.string().email().maxLength(254)
-const password = () => vine.string().minLength(8).maxLength(32)
+const signupSchema = vine.object({
+  fullName: vine.string().nullable(),
+  email: vine.string().email().unique({ table: 'users', column: 'email' }),
+  password: vine.string().minLength(8).maxLength(32), // Bersih tanpa confirmed!
+})
 
 /**
- * Validator to use when performing self-signup
+ * Ekspor sebagai validator siap pakai dengan melakukan kompilasi ulang (fresh compile)
  */
-export const signupValidator = vine.create({
-  fullName: vine.string().nullable(),
-  email: email().unique({ table: 'users', column: 'email' }),
-  password: password().confirmed({
-    confirmationField: 'passwordConfirmation',
-  }),
-})
+export const signupValidator = vine.compile(signupSchema)

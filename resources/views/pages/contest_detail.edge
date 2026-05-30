@@ -1,144 +1,201 @@
 @layouts.main({ title: contest.title + ' — KreasiHub' })
 
-  {{-- NAVBAR --}}
-  <nav class="navbar">
-    <a href="/" class="logo">Sayembara</a>
-    <div class="nav-links">
-      <a href="/" class="nav-link">Jelajahi</a>
+<nav class="navbar">
+  <a href="/" class="logo">KreasiHub</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Jelajahi</a>
+    @if(auth.isAuthenticated && auth.user.role === 'admin')
       <a href="/admin/dashboard" class="nav-link">Dashboard Admin</a>
-    </div>
-    <div class="nav-actions">
-      <a href="/" class="btn btn-o">← Kembali</a>
-    </div>
-  </nav>
+    @endif
+  </div>
+  <div class="nav-actions">
+    <a href="/" class="btn btn-o">← Kembali</a>
+    @if(auth.isAuthenticated && auth.user.role === 'admin')
+      <a href="/admin/sayembaras/{{ contest.id }}" class="btn btn-g">⚙ Kelola</a>
+    @endif
+  </div>
+</nav>
 
-  {{-- DETAIL GRID --}}
-  <div class="detail-grid">
-    {{-- SISI KIRI: INFO & GALERI KARYA --}}
-    <div>
-      <p class="card-cat" style="margin-bottom: 8px;">Sayembara / {{ contest.category }} &bull; Oleh: {{ contest.organizer || 'NN' }}</p>
-      <h1 class="form-title" style="font-size: 3rem; margin-bottom: 20px;">{{ contest.title }}</h1>
-      
-      <div class="bento-info">
-        <div class="bento-card">
-          <p class="bento-label">Bobot Publik (Vote)</p>
-          <p class="bento-val">{{ contest.weightPublic }}%</p>
-        </div>
-        <div class="bento-card">
-          <p class="bento-label">Bobot Juri (Skor)</p>
-          <p class="bento-val">{{ contest.weightJury }}%</p>
-        </div>
+<div class="detail-grid">
+  <div>
+    <p class="card-cat" style="margin-bottom:8px;">Sayembara / {{ contest.category }} &bull; Oleh: {{ contest.organizer || 'NN' }}</p>
+    <h1 class="form-title" style="font-size:3rem;margin-bottom:20px;">{{ contest.title }}</h1>
+
+    <div class="bento-info">
+      <div class="bento-card">
+        <p class="bento-label">Bobot Publik (Vote)</p>
+        <p class="bento-val">{{ contest.weightPublic }}%</p>
       </div>
-
-      <div class="brief">
-        <p><strong>Deskripsi Ketentuan:</strong></p>
-        <p>{{ contest.description }}</p>
+      <div class="bento-card">
+        <p class="bento-label">Bobot Juri (Skor)</p>
+        <p class="bento-val">{{ contest.weightJury }}%</p>
       </div>
+    </div>
 
-      <hr style="border: 0; border-top: 1px solid var(--border); margin: 40px 0 24px 0;">
+    <div style="background:var(--primary-light);border:1px solid var(--primary);border-radius:12px;padding:16px 20px;margin-bottom:24px;font-size:0.9rem;color:var(--primary-text);">
+      <strong>💡 Sistem Penilaian:</strong> Skor akhir = (Vote Publik × {{ contest.weightPublic }}%) + (Nilai Juri × {{ contest.weightJury }}%).
+      Vote publik dibuka otomatis setelah melewati deadline.
+    </div>
 
-      {{-- GALERI SUBMISSION / LEADERBOARD --}}
-      @if(isClosed)
-        <h2 class="section-title">Leaderboard & Galeri Karya ({{ contest.submissions.length }})</h2>
-        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">Karya otomatis diurutkan berdasarkan nilai akhir tertinggi dari kalkulasi bobot.</p>
-        
-        <div class="gallery-grid">
-          @each(sub in contest.submissions)
-            <div class="gal-item">
-              <div class="gal-img">
-                <span style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
-                  Skor: {{ sub.finalScore }}
-                </span>
-                <img src="{{ sub.imageUrl }}" alt="{{ sub.title }}">
-              </div>
-              <div class="gal-body">
-                <p class="card-cat" style="font-size: 0.7rem;">Oleh {{ sub.participantName }}</p>
-                <p class="card-title" style="font-size: 0.95rem; margin-bottom: 8px;">{{ sub.title }}</p>
-                
-                <div class="vote-panel" style="gap: 4px; flex-direction: column; align-items: stretch;">
-                  {{-- A. TOMBOL VOTE PUBLIK (SUDAH DIREVISI) --}}
-                  <form action="/submission/{{ sub.id }}/vote-public" method="POST" onsubmit="handleVote(event, {{ sub.id }}, this)">
+    <div class="brief">
+      <p><strong>Deskripsi Ketentuan:</strong></p>
+      <p>{{ contest.description }}</p>
+    </div>
+
+    <hr style="border:0;border-top:1px solid var(--border);margin:40px 0 24px 0;">
+
+    @if(isClosed)
+      <h2 class="section-title">🏆 Leaderboard & Galeri Karya ({{ contest.submissions.length }})</h2>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;">Karya diurutkan berdasarkan skor akhir tertinggi.</p>
+
+      <div class="gallery-grid">
+        @each(sub in contest.submissions)
+          <div class="gal-item">
+            <div class="gal-img" style="position:relative; height:180px; overflow:hidden; background:var(--surface);">
+              <span style="position:absolute;top:8px;left:8px;font-size:1.4rem;z-index:2;">
+                @if(sub_index === 0)
+                  <span>🥇</span>
+                @elseif(sub_index === 1)
+                  <span>🥈</span>
+                @elseif(sub_index === 2)
+                  <span>🥉</span>
+                @else
+                  <span style="background:rgba(0,0,0,0.6);color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:bold;">#{{ sub_index + 1 }}</span>
+                @endif
+              </span>
+              <span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:3px 10px;border-radius:4px;font-size:0.78rem;font-weight:bold;">
+                Skor: {{ sub.finalScore }}
+              </span>
+              
+              <img src="{{ sub.imageUrl }}" alt="{{ sub.title }}" style="width:100%;height:100%;object-fit:cover;"
+                   onerror="this.onerror=null; this.src='https://placehold.co/400x300/e2e8f0/475569?text=Klik+Detail+Karya';">
+            </div>
+            
+            <div class="gal-body" style="padding:16px;">
+              <p class="card-cat" style="font-size:0.7rem; margin:0;">Oleh {{ sub.participantName }}</p>
+              <p class="card-title" style="font-size:0.95rem; margin:4px 0 12px 0; font-weight:bold;">{{ sub.title }}</p>
+              
+              @if(sub.imageUrl)
+                <a href="{{ sub.imageUrl }}" target="_blank" class="btn btn-g" style="display:block; text-align:center; font-size:0.8rem; padding:8px; margin-bottom:8px; text-decoration:none;">
+                  🌐 Buka / Lihat Karya Asli
+                </a>
+              @endif
+
+              <div style="display:flex;flex-direction:column;gap:4px;">
+                <form action="/submission/{{ sub.id }}/vote-public" method="POST" onsubmit="handleVote(event, {{ sub.id }}, this)">
+                  {{ csrfField() }}
+                  <button type="submit" class="btn-vote" style="width:100%;justify-content:center;">
+                    ♥ Vote Publik ({{ sub.votes.filter(v => v.type === 'public').length }})
+                  </button>
+                </form>
+
+                @if(auth.isAuthenticated && auth.user.role === 'admin')
+                  <form action="/submission/{{ sub.id }}/vote-jury" method="POST" style="margin-top:6px;display:flex;gap:4px;">
                     {{ csrfField() }}
-                    <button type="submit" class="btn-vote" style="width: 100%; justify-content: center;">
-                      ♥ Vote Publik ({{ sub.votes.filter(v => v.type === 'public').length }})
-                    </button>
+                    <input type="number" name="score" min="1" max="100"
+                      value="{{ sub.votes.filter(v => v.type === 'jury')[0]?.score || '' }}"
+                      placeholder="Skor Juri (1-100)" class="form-input"
+                      style="padding:4px 8px;font-size:0.8rem;width:100%;" required>
+                    <button type="submit" class="btn btn-p" style="padding:4px 10px;border-radius:6px;font-size:0.75rem;white-space:nowrap;">Set</button>
                   </form>
-
-                  {{-- B. INPUT SKOR JURI --}}
-                  <form action="/submission/{{ sub.id }}/vote-jury" method="POST" style="margin-top: 6px; display: flex; gap: 4px;">
-                    {{ csrfField() }}
-                    <input type="number" name="score" min="1" max="100" value="{{ sub.votes.filter(v => v.type === 'jury')[0]?.score || '' }}" placeholder="Skor (1-100)" class="form-input" style="padding: 4px 8px; font-size: 0.8rem; width: 100%;" required>
-                    <button type="submit" class="btn btn-p" style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;">Set</button>
-                  </form>
-                </div>
+                @endif
               </div>
             </div>
-          @else
-            <p style="grid-column: 1/-1; color: var(--muted); font-size: 0.9rem; padding: 24px 0;">Belum ada karya yang masuk dan layak dinilai.</p>
-          @endeach
-        </div>
-      @else
-        <div style="text-align: center; padding: 40px 24px; background: var(--surface); border: 1px dashed var(--border); border-radius: 16px;">
-          <div style="font-size: 3rem; margin-bottom: 12px;">🔒</div>
-          <h3 style="font-size: 1.4rem; margin-bottom: 8px;">Karya Dirahasiakan</h3>
-          <p style="color: var(--muted); line-height: 1.5; margin-bottom: 0;">Untuk mencegah plagiarisme, seluruh karya disembunyikan.<br><b>Galeri dan fitur Voting akan otomatis dibuka saat lewat batas deadline penutupan.</b></p>
-        </div>
-      @endif
-    </div>
-
-    {{-- SISI KANAN: FORM SUBMIT KARYA BARU --}}
-    <div style="border-left: 1px solid var(--border); padding-left: 32px;">
-      @if(!isClosed)
-        <h2 class="form-title" style="font-size: 1.8rem; margin-bottom: 8px;">Ikuti Lomba</h2>
-        <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 20px;">Kirimkan hasil karya terbaikmu di sini.</p>
-
-        <form action="/sayembara/{{ contest.id }}/submit" method="POST" class="form-box" style="padding: 0; gap: 16px; background: transparent; border: none;">
-          {{ csrfField() }}
-          <div class="form-group">
-            <label class="form-label">Nama Lengkap</label>
-            <input type="text" name="participant_name" placeholder="Misal: Arjuna Yudha" class="form-input" required>
           </div>
-          <div class="form-group">
-            <label class="form-label">Judul Karya</label>
-            <input type="text" name="title" placeholder="Misal: Eksplorasi Poster Futuristik" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Link Gambar Karya (URL)</label>
-            <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="form-input">
-            <span style="font-size: 0.75rem; color: var(--muted);">Kamu bisa gunakan link gambar bebas dari internet/Unsplash.</span>
-          </div>
-          <button type="submit" class="btn btn-p" style="width: 100%; padding: 12px;">Kirim Karya</button>
-        </form>
-      @else
-        <div style="text-align: center; padding: 40px 24px; background: var(--primary-light); border-radius: 16px; border: 1px solid var(--primary);">
-          <div style="font-size: 3rem; margin-bottom: 12px;">⏰</div>
-          <h2 class="form-title" style="font-size: 1.6rem; margin-bottom: 8px;">Pengumpulan Ditutup</h2>
-          <p style="font-size: 0.95rem; color: var(--ink);">Masa pengumpulan karya telah resmi berakhir. Saatnya proses penjurian dan Vote Publik!</p>
-        </div>
-      @endif
-    </div>
+        @else
+          <p style="grid-column:1/-1;color:var(--muted);padding:24px 0;">Belum ada karya yang masuk.</p>
+        @endeach
+      </div>
+    @else
+      <div style="text-align:center;padding:40px 24px;background:var(--surface);border:1px dashed var(--border);border-radius:16px;">
+        <div style="font-size:3rem;margin-bottom:12px;">🔒</div>
+        <h3 style="font-size:1.4rem;margin-bottom:8px;">Karya Dirahasiakan</h3>
+        <p style="color:var(--muted);line-height:1.5;">Untuk mencegah plagiarisme, seluruh karya disembunyikan.<br>
+        <b>Galeri dan Voting otomatis dibuka setelah deadline.</b></p>
+      </div>
+    @endif
   </div>
 
-  {{-- AJAX SCRIPT SUPAYA VOTE PUBLIK LANGSUNG UPDATE TANPA REFRESH PENUH --}}
-  <script>
-    async function handleVote(event, subId, form) {
-      event.preventDefault()
-      const csrfToken = form.querySelector('[name="_csrf"]').value
-      try {
-        const response = await fetch(`/submission/${subId}/vote-public`, {
-          method: 'POST',
-          headers: { 
-            'X-Requested-With': 'XMLHttpRequest',
-            'x-csrf-token': csrfToken
-          }
-        })
-        if (response.ok) {
-          window.location.reload()
-        }
-      } catch (err) {
-        console.error('Gagal melakukan vote', err)
+  <div style="border-left:1px solid var(--border);padding-left:32px;">
+    @if(!isClosed)
+      <h2 class="form-title" style="font-size:1.8rem;margin-bottom:8px;">Ikuti Lomba</h2>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:20px;">Kirimkan hasil karya terbaikmu di sini.</p>
+      <form action="/sayembara/{{ contest.id }}/submit" method="POST" style="display:flex;flex-direction:column;gap:16px;">
+        {{ csrfField() }}
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap</label>
+          <input type="text" name="participant_name" placeholder="Misal: Arjuna Yudha" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Judul Karya</label>
+          <input type="text" name="title" placeholder="Misal: Eksplorasi Poster Futuristik" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Link Gambar / Website / Drive (URL)</label>
+          <input type="url" name="image_url" placeholder="https://..." class="form-input" required>
+          <span style="font-size:0.75rem;color:var(--muted);">Masukkan link gambar langsung, link prototype Figma, atau link website buatanmu.</span>
+        </div>
+        <button type="submit" class="btn btn-p" style="width:100%;padding:12px;">Kirim Karya 🚀</button>
+      </form>
+    @else
+      <div style="text-align:center;padding:40px 24px;background:var(--primary-light);border-radius:16px;border:1px solid var(--primary);">
+        <div style="font-size:3rem;margin-bottom:12px;">⏰</div>
+        <h2 class="form-title" style="font-size:1.6rem;margin-bottom:8px;">Pengumpulan Ditutup</h2>
+        <p style="font-size:0.95rem;color:var(--ink);">Masa pengumpulan karya telah resmi berakhir. Saatnya Vote Publik!</p>
+      </div>
+    @endif
+  </div>
+</div>
+
+<script>
+  async function handleVote(event, subId, form) {
+    event.preventDefault()
+    const btn = form.querySelector('button[type="submit"]')
+    const csrfToken = form.querySelector('[name="_csrf"]').value
+    
+    btn.disabled = true
+    btn.textContent = '⏳ Memproses...'
+    
+    try {
+      const name = prompt('Masukkan nama kamu untuk mencatat vote (contoh: Nama Lengkap atau Inisial)')
+      if (!name || !name.trim()) {
+        btn.disabled = false
+        btn.textContent = '♥ Vote Publik'
+        if (window.showFlash) showFlash('Nama wajib diisi untuk melakukan vote.', 'destructive')
+        else alert('Nama wajib diisi untuk melakukan vote.')
+        return
       }
+
+      const response = await fetch(`/submission/${subId}/vote-public`, {
+        method: 'POST',
+        headers: { 
+          'X-Requested-With': 'XMLHttpRequest', 
+          'X-CSRF-Token': csrfToken,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ voter_name: name.trim() })
+      })
+      
+      if (response.ok) {
+        btn.classList.add('voted')
+        btn.textContent = '✅ Vote Terkirim!'
+        if (window.showFlash) showFlash('Vote berhasil dikirim!', 'success')
+        else alert('Vote berhasil dikirim!')
+        setTimeout(() => window.location.reload(), 800)
+      } else {
+        const data = await response.json()
+        btn.disabled = false
+        btn.textContent = '♥ Vote Publik'
+        if (window.showFlash) showFlash(data.message || 'Gagal mengirim vote.', 'destructive')
+        else alert(data.message || 'Gagal mengirim vote.')
+      }
+    } catch (err) {
+      btn.disabled = false
+      btn.textContent = '♥ Vote Publik'
+      if (window.showFlash) showFlash('Terjadi kesalahan jaringan.', 'destructive')
+      else alert('Terjadi kesalahan jaringan.')
     }
-  </script>
+  }
+</script>
 
 @end

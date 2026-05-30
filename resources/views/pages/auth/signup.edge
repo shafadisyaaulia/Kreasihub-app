@@ -1,37 +1,58 @@
-@layouts.main({ title: 'Daftar Admin — KreasiHub' })
-<nav class="navbar">
-<a href="/" class="logo">Sayembara</a>
-<div class="nav-links">
-<a href="/" class="nav-link">Jelajahi</a>
-</div>
-</nav>
+@layouts.main({ title: 'Daftar Akun — KreasiHub' })
 
-<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-  <div class="form-box" style="width: 100%; max-width: 400px; padding: 40px;">
-    <h1 class="form-title" style="font-size: 2.2rem; margin-bottom: 8px; text-align: center;">Daftar Akun</h1>
-    <p style="text-align: center; color: var(--muted); margin-bottom: 24px;">Silakan buat akun untuk mengelola platform.</p>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--white) 0%,var(--primary-light) 100%);padding:40px 20px;">
+  <div style="width:100%;max-width:420px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="/" class="logo" style="font-size:2.5rem;display:inline-block;margin-bottom:8px;">KreasiHub</a>
+      <p style="color:var(--muted);font-size:0.95rem;">Buat akun untuk ikut serta dalam sayembara</p>
+    </div>
+    <div class="form-box" style="padding:36px;">
+      <h1 style="font-size:1.6rem;font-weight:700;color:var(--black);margin-bottom:4px;">Buat Akun Baru</h1>
+      <p style="color:var(--muted);margin-bottom:28px;font-size:0.9rem;">Isi formulir di bawah ini untuk mendaftarkan akun kamu.</p>
 
-    <form action="/signup" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
-      {{ csrfField() }}
-      
-      <div class="form-group">
-        <label class="form-label">Nama Lengkap</label>
-        <input type="text" name="fullName" class="form-input" style="background: var(--white);" required>
-      </div>
+      @if(flashMessages.has('error'))
+        <div style="background: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.88rem; font-weight: 500;">
+          ⚠️ {{ flashMessages.get('error') }}
+        </div>
+      @endif
 
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-input" style="background: var(--white);" required>
-      </div>
+      @if(flashMessages.has('errors'))
+        <div style="background: #fff7ed; border: 1px solid #fb923c; color: #c2410c; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.88rem;">
+          <strong style="display:block; margin-bottom: 6px;">Periksa kembali isian Anda:</strong>
+          <ul style="margin: 0; padding-left: 16px; line-height: 1.4;">
+            @each(message in flashMessages.get('errors'))
+              <li>{{ message.message }}</li>
+            @endeach
+          </ul>
+        </div>
+      @endif
 
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-input" style="background: var(--white);" required>
-      </div>
-
-      <button type="submit" class="btn btn-p" style="padding: 12px; margin-top: 16px;">Daftar Sekarang</button>
-    </form>
-    <p style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--muted);">Sudah punya akun? <a href="/login" style="color: var(--primary); font-weight: 600; text-decoration: none;">Login di sini</a></p>
+      <form action="/signup" method="POST" style="display:flex;flex-direction:column;gap:16px;">
+        {{ csrfField() }}
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap</label>
+          <input type="text" name="fullName" class="form-input" placeholder="Misal: Budi Santoso" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input" placeholder="budi@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-input" placeholder="Min. 8 karakter" required>
+        </div>
+        <button type="submit" class="btn btn-p" style="padding:14px;margin-top:8px;font-size:1rem;width:100%;">
+          Daftar Sekarang 🚀
+        </button>
+      </form>
+      <p style="text-align:center;margin-top:24px;font-size:0.9rem;color:var(--muted);">
+        Sudah punya akun? <a href="/login" style="color:var(--primary);font-weight:600;text-decoration:none;">Login di sini</a>
+      </p>
+    </div>
+    <p style="text-align:center;margin-top:24px;font-size:0.85rem;">
+      <a href="/" style="color:var(--muted);text-decoration:none;">← Kembali ke halaman utama</a>
+    </p>
   </div>
 </div>
+
 @end
