@@ -1,0 +1,144 @@
+@layouts.main({ title: contest.title + ' — KreasiHub' })
+
+  {{-- NAVBAR --}}
+  <nav class="navbar">
+    <a href="/" class="logo">Sayembara</a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Jelajahi</a>
+      <a href="/admin/dashboard" class="nav-link">Dashboard Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/" class="btn btn-o">← Kembali</a>
+    </div>
+  </nav>
+
+  {{-- DETAIL GRID --}}
+  <div class="detail-grid">
+    {{-- SISI KIRI: INFO & GALERI KARYA --}}
+    <div>
+      <p class="card-cat" style="margin-bottom: 8px;">Sayembara / {{ contest.category }} &bull; Oleh: {{ contest.organizer || 'NN' }}</p>
+      <h1 class="form-title" style="font-size: 3rem; margin-bottom: 20px;">{{ contest.title }}</h1>
+      
+      <div class="bento-info">
+        <div class="bento-card">
+          <p class="bento-label">Bobot Publik (Vote)</p>
+          <p class="bento-val">{{ contest.weightPublic }}%</p>
+        </div>
+        <div class="bento-card">
+          <p class="bento-label">Bobot Juri (Skor)</p>
+          <p class="bento-val">{{ contest.weightJury }}%</p>
+        </div>
+      </div>
+
+      <div class="brief">
+        <p><strong>Deskripsi Ketentuan:</strong></p>
+        <p>{{ contest.description }}</p>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 40px 0 24px 0;">
+
+      {{-- GALERI SUBMISSION / LEADERBOARD --}}
+      @if(isClosed)
+        <h2 class="section-title">Leaderboard & Galeri Karya ({{ contest.submissions.length }})</h2>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 12px;">Karya otomatis diurutkan berdasarkan nilai akhir tertinggi dari kalkulasi bobot.</p>
+        
+        <div class="gallery-grid">
+          @each(sub in contest.submissions)
+            <div class="gal-item">
+              <div class="gal-img">
+                <span style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">
+                  Skor: {{ sub.finalScore }}
+                </span>
+                <img src="{{ sub.imageUrl }}" alt="{{ sub.title }}">
+              </div>
+              <div class="gal-body">
+                <p class="card-cat" style="font-size: 0.7rem;">Oleh {{ sub.participantName }}</p>
+                <p class="card-title" style="font-size: 0.95rem; margin-bottom: 8px;">{{ sub.title }}</p>
+                
+                <div class="vote-panel" style="gap: 4px; flex-direction: column; align-items: stretch;">
+                  {{-- A. TOMBOL VOTE PUBLIK (SUDAH DIREVISI) --}}
+                  <form action="/submission/{{ sub.id }}/vote-public" method="POST" onsubmit="handleVote(event, {{ sub.id }}, this)">
+                    {{ csrfField() }}
+                    <button type="submit" class="btn-vote" style="width: 100%; justify-content: center;">
+                      ♥ Vote Publik ({{ sub.votes.filter(v => v.type === 'public').length }})
+                    </button>
+                  </form>
+
+                  {{-- B. INPUT SKOR JURI --}}
+                  <form action="/submission/{{ sub.id }}/vote-jury" method="POST" style="margin-top: 6px; display: flex; gap: 4px;">
+                    {{ csrfField() }}
+                    <input type="number" name="score" min="1" max="100" value="{{ sub.votes.filter(v => v.type === 'jury')[0]?.score || '' }}" placeholder="Skor (1-100)" class="form-input" style="padding: 4px 8px; font-size: 0.8rem; width: 100%;" required>
+                    <button type="submit" class="btn btn-p" style="padding: 4px 8px; border-radius: 6px; font-size: 0.75rem;">Set</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          @else
+            <p style="grid-column: 1/-1; color: var(--muted); font-size: 0.9rem; padding: 24px 0;">Belum ada karya yang masuk dan layak dinilai.</p>
+          @endeach
+        </div>
+      @else
+        <div style="text-align: center; padding: 40px 24px; background: var(--surface); border: 1px dashed var(--border); border-radius: 16px;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">🔒</div>
+          <h3 style="font-size: 1.4rem; margin-bottom: 8px;">Karya Dirahasiakan</h3>
+          <p style="color: var(--muted); line-height: 1.5; margin-bottom: 0;">Untuk mencegah plagiarisme, seluruh karya disembunyikan.<br><b>Galeri dan fitur Voting akan otomatis dibuka saat lewat batas deadline penutupan.</b></p>
+        </div>
+      @endif
+    </div>
+
+    {{-- SISI KANAN: FORM SUBMIT KARYA BARU --}}
+    <div style="border-left: 1px solid var(--border); padding-left: 32px;">
+      @if(!isClosed)
+        <h2 class="form-title" style="font-size: 1.8rem; margin-bottom: 8px;">Ikuti Lomba</h2>
+        <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 20px;">Kirimkan hasil karya terbaikmu di sini.</p>
+
+        <form action="/sayembara/{{ contest.id }}/submit" method="POST" class="form-box" style="padding: 0; gap: 16px; background: transparent; border: none;">
+          {{ csrfField() }}
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" name="participant_name" placeholder="Misal: Arjuna Yudha" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Judul Karya</label>
+            <input type="text" name="title" placeholder="Misal: Eksplorasi Poster Futuristik" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Link Gambar Karya (URL)</label>
+            <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="form-input">
+            <span style="font-size: 0.75rem; color: var(--muted);">Kamu bisa gunakan link gambar bebas dari internet/Unsplash.</span>
+          </div>
+          <button type="submit" class="btn btn-p" style="width: 100%; padding: 12px;">Kirim Karya</button>
+        </form>
+      @else
+        <div style="text-align: center; padding: 40px 24px; background: var(--primary-light); border-radius: 16px; border: 1px solid var(--primary);">
+          <div style="font-size: 3rem; margin-bottom: 12px;">⏰</div>
+          <h2 class="form-title" style="font-size: 1.6rem; margin-bottom: 8px;">Pengumpulan Ditutup</h2>
+          <p style="font-size: 0.95rem; color: var(--ink);">Masa pengumpulan karya telah resmi berakhir. Saatnya proses penjurian dan Vote Publik!</p>
+        </div>
+      @endif
+    </div>
+  </div>
+
+  {{-- AJAX SCRIPT SUPAYA VOTE PUBLIK LANGSUNG UPDATE TANPA REFRESH PENUH --}}
+  <script>
+    async function handleVote(event, subId, form) {
+      event.preventDefault()
+      const csrfToken = form.querySelector('[name="_csrf"]').value
+      try {
+        const response = await fetch(`/submission/${subId}/vote-public`, {
+          method: 'POST',
+          headers: { 
+            'X-Requested-With': 'XMLHttpRequest',
+            'x-csrf-token': csrfToken
+          }
+        })
+        if (response.ok) {
+          window.location.reload()
+        }
+      } catch (err) {
+        console.error('Gagal melakukan vote', err)
+      }
+    }
+  </script>
+
+@end

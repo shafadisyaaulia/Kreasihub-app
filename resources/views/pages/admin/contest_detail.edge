@@ -1,0 +1,113 @@
+@layouts.main({ title: 'Kelola ' + contest.title + ' — Admin KreasiHub' })
+<nav class="navbar">
+<a href="/" class="logo">Sayembara</a>
+<div class="nav-links">
+<a href="/admin/dashboard" class="nav-link active">← Kembali ke Dashboard</a>
+</div>
+<div class="nav-actions">
+<form action="/logout" method="POST" style="margin: 0;">
+{{ csrfField() }}
+<button type="submit" class="btn btn-o">Logout</button>
+</form>
+</div>
+</nav>
+
+<div class="admin-layout" style="grid-template-columns: 1fr;">
+<main class="admin-main">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;">
+    <div>
+      <p class="card-cat" style="margin-bottom: 8px;">Kelola Sayembara Khusus Admin</p>
+      <h1 class="form-title" style="font-size: 2.4rem;">{{ contest.title }}</h1>
+    </div>
+    <div style="background: var(--surface); padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); text-align: center;">
+      <p style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em;">Total Pendaftar</p>
+      <p style="font-size: 1.5rem; font-family: monospace; font-weight: bold; color: var(--primary);">{{ contest.submissions.length }}</p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start;">
+    
+    {{-- BAGIAN DAFTAR PESERTA --}}
+    <div>
+      <h2 class="section-title">Daftar Pendaftar (Submission)</h2>
+      <div class="gallery-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 16px;">
+        @each(sub in contest.submissions)
+          <div class="card" style="flex-direction: row; height: 120px; align-items: center; padding-right: 16px; cursor: default;">
+            <div class="card-img" style="width: 120px; height: 100%; flex-shrink: 0; border-radius: 0;">
+              <img src="{{ sub.imageUrl }}" alt="{{ sub.title }}">
+            </div>
+            <div class="card-body" style="justify-content: center; gap: 4px; padding: 16px;">
+              <p class="card-cat" style="font-size: 0.7rem;">Pembuat: {{ sub.participantName }}</p>
+              <p class="card-title" style="font-size: 1.05rem;">{{ sub.title }}</p>
+              <div style="display: flex; gap: 12px; margin-top: 4px;">
+                <span class="badge badge-aktif" style="background: var(--primary-light); color: var(--primary); border-color: var(--primary-light);">Skor Akhir: {{ sub.finalScore }}</span>
+                <span style="font-size: 0.8rem; color: var(--muted); display: flex; align-items: center;">♥ {{ sub.votes.filter(v => v.type === 'public').length }} Publik</span>
+                <span style="font-size: 0.8rem; color: var(--muted); display: flex; align-items: center;">⭐ {{ sub.votes.filter(v => v.type === 'jury')[0]?.score || 0 }} Juri</span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+               {{-- Delete Submission --}}
+               <form action="/admin/submissions/{{ sub.id }}?_method=DELETE" method="POST" onsubmit="return confirm('Yakin ingin mendiskualifikasi dan menghapus karya ini?')">
+                {{ csrfField() }}
+                <button type="submit" class="btn btn-o" style="color: #ff5f56; border-color: #fca5a5; padding: 6px 12px; font-size: 0.75rem;">Diskualifikasi</button>
+              </form>
+            </div>
+          </div>
+        @else
+          <div style="text-align: center; padding: 32px; background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; color: var(--muted);">
+            Belum ada karya yang diunggah oleh peserta.
+          </div>
+        @endeach
+      </div>
+    </div>
+
+    {{-- BAGIAN EDIT SAYEMBARA --}}
+    <div style="background: var(--surface); padding: 24px; border-radius: 12px; border: 1px solid var(--border);">
+      <h2 class="section-title" style="margin-bottom: 16px;">Edit Pengaturan Sayembara</h2>
+      <form action="/admin/sayembaras/{{ contest.id }}/edit" method="POST" style="display: flex; flex-direction: column; gap: 16px;">
+        {{ csrfField() }}
+        <div class="form-group">
+          <label class="form-label">Nama Sayembara</label>
+          <input type="text" name="title" value="{{ contest.title }}" class="form-input" style="background: var(--white);" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <input type="text" name="category" value="{{ contest.category }}" class="form-input" style="background: var(--white);" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Link Banner/Gambar Lomba</label>
+          <input type="url" name="image_url" value="{{ contest.imageUrl || '' }}" placeholder="https://images.unsplash.com/..." class="form-input" style="background: var(--white);">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deskripsi & Aturan</label>
+          <textarea name="description" class="form-input" style="background: var(--white); height: 80px; resize: none;" required>{{ contest.description }}</textarea>
+        </div>
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label class="form-label">Ubah Bobot (<span style="color:#ff5f56">Hati-hati!</span>)</label>
+            <span id="slider-label" style="font-size: 0.8rem; font-weight: bold; font-family: monospace; color: var(--muted);">{{ contest.weightPublic }}% Publik / {{ contest.weightJury }}% Juri</span>
+          </div>
+          <input type="hidden" id="weight_public" name="weight_public" value="{{ contest.weightPublic }}">
+          <input type="hidden" id="weight_jury" name="weight_jury" value="{{ contest.weightJury }}">
+          <div class="slider-container">
+            <input type="range" min="0" max="100" value="{{ contest.weightPublic }}" class="form-input" style="padding:0; background:none; cursor:pointer;" oninput="updateWeightsDetail(this.value)">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-p" style="width: 100%; padding: 12px; margin-top: 8px;">Simpan Perubahan</button>
+      </form>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script>
+function updateWeightsDetail(val) {
+  const publicWeight = parseInt(val);
+  const juryWeight = 100 - publicWeight;
+  document.getElementById('slider-label').innerText = `${publicWeight}% Publik / ${juryWeight}% Juri`;
+  document.getElementById('weight_public').value = publicWeight;
+  document.getElementById('weight_jury').value = juryWeight;
+}
+</script>
+@end
